@@ -44,4 +44,4 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
+CMD ["sh", "-c", "echo 'Starting migration...' && ./node_modules/.bin/prisma migrate deploy 2>&1 || echo 'WARN: Migration failed, continuing anyway' && echo 'Starting server...' && node server.js"]
