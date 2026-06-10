@@ -39,4 +39,4 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
+CMD ["sh", "-c", "npx prisma migrate resolve --rolled-back 20260610180000_seed_users 2>/dev/null || true; npx prisma migrate deploy && node server.js"]
