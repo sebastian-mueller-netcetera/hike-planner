@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String
+  email        String?  @unique
+  passwordHash String?  @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  hikes Hike[]
+
+  @@map("users")
+}
+
+model Hike {
+  id              String    @id @default(uuid()) @db.Uuid
+  name            String
+  region          String?
+  activityType    String?   @map("activity_type")
+  difficultyRaw   String?   @map("difficulty_raw")
+  maxElevationM   Int?      @map("max_elevation_m")
+  ascentM         Int?      @map("ascent_m")
+  descentM        Int?      @map("descent_m")
+  distanceKm      Decimal?  @map("distance_km") @db.Decimal(6, 2)
+  isMultiDay      Boolean   @default(false) @map("is_multi_day")
+  isLoop          Boolean   @default(false) @map("is_loop")
+  startLocation   String?   @map("start_location")
+  endLocation     String?   @map("end_location")
+  destinationType String?   @map("destination_type")
+  usesCableCar    Boolean   @default(false) @map("uses_cable_car")
+  season          String?
+  status          String    @default("planned")
+  completedDate   DateTime? @map("completed_date") @db.Date
+  notes           String?
+  source          String
+  importHash      String?   @map("import_hash")
+  createdByUserId String?   @map("created_by_user_id") @db.Uuid
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  createdBy User?      @relation(fields: [createdByUserId], references: [id])
+  links     HikeLink[]
+  gpxFile   HikeGpxFile?
+
+  @@map("hikes")
+}
+
+model HikeLink {
+  id        String   @id @default(uuid()) @db.Uuid
+  hikeId    String   @map("hike_id") @db.Uuid
+  position  Int
+  url       String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  hike Hike @relation(fields: [hikeId], references: [id], onDelete: Cascade)
+
+  @@map("hike_links")
+}
+
+model HikeGpxFile {
+  id               String   @id @default(uuid()) @db.Uuid
+  hikeId           String   @unique @map("hike_id") @db.Uuid
+  originalFilename String   @map("original_filename")
+  mimeType         String?  @map("mime_type")
+  storagePath      String   @map("storage_path")
+  fileSizeBytes    Int      @map("file_size_bytes")
+  geojson          Json?
+  routeBounds      Json?    @map("route_bounds")
+  routeCenter      Json?    @map("route_center")
+  routeDistanceM   Decimal? @map("route_distance_m") @db.Decimal(10, 2)
+  uploadedAt       DateTime @default(now()) @map("uploaded_at") @db.Timestamptz
+
+  hike Hike @relation(fields: [hikeId], references: [id], onDelete: Cascade)
+
+  @@map("hike_gpx_files")
+}
