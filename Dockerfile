@@ -1,24 +1,28 @@
 # --- Build stage ---
-FROM node:20-slim AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
+RUN apk add --no-cache openssl libc6-compat
+
+COPY package.json ./
 COPY prisma ./prisma
-RUN npm ci
+# Use npm install (not ci) to resolve platform-specific optional deps for Alpine/musl
+RUN npm install
 
 COPY . .
 RUN npm run build
 
 # --- Production stage ---
-FROM node:20-slim AS runner
+FROM node:20-alpine AS runner
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN groupadd -r -g 1001 nodejs && useradd -r -u 1001 -g nodejs nextjs
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
 # Copy standalone output
 COPY --from=builder /app/.next/standalone ./
